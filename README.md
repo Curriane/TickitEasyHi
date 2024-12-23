@@ -317,4 +317,68 @@ public class InsertTransaction {
     }
 }
 
+import java.sql.*;
+import java.util.Random;
 
+public class AdvancedInsertTransaction {
+    public static void main(String[] args) {
+        String url = "jdbc:your_database_url";
+        String user = "your_username";
+        String password = "your_password";
+        String insertSql = "INSERT INTO STUDENT.CARS (MANUFACTURER, TYPE, PRICE, MIN_PRICE) VALUES (?, ?, ?, ?)";
+        String selectSql = "SELECT * FROM STUDENT.CARS WHERE MANUFACTURER LIKE 'CATHAYBK%'";
+
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+             PreparedStatement insertStmt = conn.prepareStatement(insertSql);
+             PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+
+            Random random = new Random();
+            conn.setAutoCommit(false); // 關閉自動提交
+
+            // 第一筆資料
+            String manufacturer1 = "CATHAYBK" + (random.nextInt(90000) + 10000);
+            String type1 = String.valueOf(random.nextInt(90000) + 10000);
+            int minPrice1 = random.nextInt(10000);
+            int price1 = minPrice1 + random.nextInt(1000);
+
+            // 第二筆資料
+            String manufacturer2 = manufacturer1 + "+2";
+            String type2 = String.valueOf(random.nextInt(90000) + 10000);
+            int minPrice2 = random.nextInt(10000);
+            int price2 = minPrice2 + random.nextInt(1000);
+
+            // 插入第一筆
+            insertStmt.setString(1, manufacturer1);
+            insertStmt.setString(2, type1);
+            insertStmt.setInt(3, price1);
+            insertStmt.setInt(4, minPrice1);
+            insertStmt.executeUpdate();
+
+            // 插入第二筆
+            insertStmt.setString(1, manufacturer2);
+            insertStmt.setString(2, type2);
+            insertStmt.setInt(3, price2);
+            insertStmt.setInt(4, minPrice2);
+            insertStmt.executeUpdate();
+
+            conn.commit(); // 提交交易
+
+            // 驗證結果
+            try (ResultSet rs = selectStmt.executeQuery()) {
+                while (rs.next()) {
+                    System.out.println("製造商: " + rs.getString("MANUFACTURER") +
+                            "，型號: " + rs.getString("TYPE") +
+                            "，售價: " + rs.getInt("PRICE") +
+                            "，底價: " + rs.getInt("MIN_PRICE"));
+                }
+            }
+        } catch (SQLException e) {
+            try {
+                System.err.println("交易失敗，進行回滾...");
+                e.printStackTrace();
+            } catch (SQLException rollbackEx) {
+                rollbackEx.printStackTrace();
+            }
+        }
+    }
+}
