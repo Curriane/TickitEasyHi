@@ -271,5 +271,50 @@ public class ExceptionHandle {
     }
 }
 ```
+import java.sql.*;
+import java.util.Random;
+
+public class InsertTransaction {
+    public static void main(String[] args) {
+        String url = "jdbc:your_database_url";
+        String user = "your_username";
+        String password = "your_password";
+        String insertSql = "INSERT INTO STUDENT.CARS (MANUFACTURER, TYPE, PRICE, MIN_PRICE) VALUES (?, ?, ?, ?)";
+        String selectSql = "SELECT * FROM STUDENT.CARS WHERE MANUFACTURER = ?";
+
+        try (Connection conn = DriverManager.getConnection(url, user, password);
+             PreparedStatement insertStmt = conn.prepareStatement(insertSql);
+             PreparedStatement selectStmt = conn.prepareStatement(selectSql)) {
+
+            Random random = new Random();
+            String manufacturer = "CATHAYBK" + (random.nextInt(90000) + 10000);
+            String type = String.valueOf(random.nextInt(90000) + 10000);
+            int minPrice = random.nextInt(10000);
+            int price = minPrice + random.nextInt(1000);
+
+            // 插入資料
+            insertStmt.setString(1, manufacturer);
+            insertStmt.setString(2, type);
+            insertStmt.setInt(3, price);
+            insertStmt.setInt(4, minPrice);
+            int rows = insertStmt.executeUpdate();
+
+            // 驗證插入成功
+            if (rows > 0) {
+                selectStmt.setString(1, manufacturer);
+                try (ResultSet rs = selectStmt.executeQuery()) {
+                    while (rs.next()) {
+                        System.out.println("製造商: " + rs.getString("MANUFACTURER") +
+                                "，型號: " + rs.getString("TYPE") +
+                                "，售價: " + rs.getInt("PRICE") +
+                                "，底價: " + rs.getInt("MIN_PRICE"));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+}
 
 
